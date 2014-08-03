@@ -22,12 +22,14 @@ module Rack
 
     def cache(env, response)
       path = Rack::Utils.unescape(env["PATH_INFO"])
+
+      ext = ::File.extname(path)
             
       if path[-1, 1] == "/"
         path = ::File.join(path, "index.html")
-      else
-        path << '.html'         
-      end      
+      elsif ext == ''
+        path << '.html'
+      end
         
       basename  = ::File.basename(path)
       dirname   = ::File.join(@directory, ::File.dirname(path))
