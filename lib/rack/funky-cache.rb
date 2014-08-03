@@ -7,17 +7,19 @@ module Rack
     
     def initialize(app, settings={})
       @app = app       
-      @settings  = settings
-      @root      = settings[:root] || Dir.pwd
-      @path      = settings[:path] || "/public"
-      @directory = settings[:directory] || ::File.join(@root, @path)    end
+      @settings   = settings
+      @root       = settings[:root] || Dir.pwd
+      @path       = settings[:path] || "/public"
+      @directory  = settings[:directory] || ::File.join(@root, @path)
+      @file_types = settings[:file_types] || [ %r{text/html} ]
+    end
 
     def call(env)
       response = @app.call(env)
       cache(env, response) if should_cache(env, response)
       response
     end
-        
+
     def cache(env, response)
       path = Rack::Utils.unescape(env["PATH_INFO"])
             
@@ -45,8 +47,9 @@ module Rack
     def should_cache(env, response)
       unless env_excluded?(env)
         request = Rack::Request.new(env)
+        content_type = response[1]["Content-Type"]
         request.get? && request.query_string.empty? &&
-          /text\/html/ =~ response[1]["Content-Type"] && 200 == response[0]
+          @file_types.detect { |t| t =~ content_type } && 200 == response[0]
       end
     end
 
