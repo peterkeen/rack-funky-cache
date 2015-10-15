@@ -50,8 +50,12 @@ module Rack
       unless env_excluded?(env)
         request = Rack::Request.new(env)
         content_type = response[1]["Content-Type"]
-        request.get? && request.query_string.empty? &&
+        should = request.get? && request.query_string.empty? &&
           @file_types.detect { |t| t =~ content_type } && 200 == response[0]
+        unless settings[:should_cache].nil?
+          should &&= settings[:should_cache].call(request, response)
+        end
+        should
       end
     end
 
